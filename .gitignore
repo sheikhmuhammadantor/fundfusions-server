@@ -25,3 +25,4 @@ __note.*
 *.njsproj
 *.sln
 *.sw?
+.vercel
