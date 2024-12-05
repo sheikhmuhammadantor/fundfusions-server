@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 3000;
@@ -28,6 +28,7 @@ async function run() {
         await client.connect();
 
         const campDB = client.db("FoundFusions").collection('campaign');
+        const donationDB = client.db("FoundFusions").collection('donated collection');
 
         // * Work With Api/Frontend Route's;
         app.post('/addCampaign', async (req, res) => {
@@ -41,6 +42,18 @@ async function run() {
             const result = await campDB.find().toArray();
             res.send(result);
         })
+        
+        app.get('/campaign/:id', async(req, res) => {
+            const id = req.params.id;
+            const query = {_id: new ObjectId(id)};
+            const result = await campDB.findOne(query);
+            res.send(result);
+        }).post('/campaign/:id', async(req, res) => {
+            const data = req.body;
+            const result = await donationDB.insertOne(data);
+            res.send(result);
+        })
+
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
