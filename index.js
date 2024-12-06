@@ -38,21 +38,23 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/campaigns', async(req, res) => {
+        app.get('/campaigns', async (req, res) => {
             const result = await campDB.find().toArray();
             res.send(result);
         })
-        
-        app.get('/campaign/:id', async(req, res) => {
+
+        app.get('/campaign/:id', async (req, res) => {
             const id = req.params.id;
-            const query = {_id: new ObjectId(id)};
+            const query = { _id: new ObjectId(id) };
             const result = await campDB.findOne(query);
             res.send(result);
-        }).post('/campaign/:id', async(req, res) => {
+        }).post('/campaign/:id', async (req, res) => {
             const data = req.body;
             const result = await donationDB.insertOne(data);
             res.send(result);
         })
+
+
 
 
         // Send a ping to confirm a successful connection
