@@ -50,11 +50,17 @@ async function run() {
             res.send(result);
         }).post('/campaign/:id', async (req, res) => {
             const data = req.body;
+            console.log(data);
             const result = await donationDB.insertOne(data);
             res.send(result);
         })
-
-
+   
+        app.get('/myDonations', async (req, res) => {
+            const email = req.query.email;
+            const query = {email: email}
+            const result = await donationDB.find(query).toArray();
+            res.send(result);
+        })
 
 
         // Send a ping to confirm a successful connection
