@@ -61,6 +61,20 @@ async function run() {
             const result = await donationDB.find(query).toArray();
             res.send(result);
         })
+        
+        app.get('/myCampaign', async (req, res) => {
+            const email = req.query.email;
+            const query = {email: email}
+            const result = await campDB.find(query).toArray();
+            res.send(result);
+        })
+
+        app.delete('/myCampaign/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = {_id: new ObjectId(id)}
+            const result = await campDB.deleteOne(query);
+            res.send(result);
+        })
 
 
         // Send a ping to confirm a successful connection
