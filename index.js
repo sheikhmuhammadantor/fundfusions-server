@@ -42,6 +42,11 @@ async function run() {
             const result = await campDB.find().toArray();
             res.send(result);
         })
+        
+        app.get('/campaigns/sort', async (req, res) => {
+            const result = await campDB.find().sort({ amount: 1 }).toArray();
+            res.send(result);
+        })
 
         app.get('/campaign/:id', async (req, res) => {
             const id = req.params.id;
