@@ -54,25 +54,37 @@ async function run() {
             const result = await donationDB.insertOne(data);
             res.send(result);
         })
-   
+
         app.get('/myDonations', async (req, res) => {
             const email = req.query.email;
-            const query = {email: email}
+            const query = { email: email }
             const result = await donationDB.find(query).toArray();
             res.send(result);
         })
-        
+
         app.get('/myCampaign', async (req, res) => {
             const email = req.query.email;
-            const query = {email: email}
+            const query = { email: email }
             const result = await campDB.find(query).toArray();
             res.send(result);
         })
 
         app.delete('/myCampaign/:id', async (req, res) => {
-            const id = req.params.id;
-            const query = {_id: new ObjectId(id)}
+            const id = req.params.id; 
+            const query = { _id: new ObjectId(id) }
             const result = await campDB.deleteOne(query);
+            res.send(result);
+        })
+
+        app.put('/updateCampaign', async (req, res) => {
+            const body = req.body;
+            const query = { _id: new ObjectId(body._id) }
+            const updatedCamp = {
+                $set: {
+                    title: body.title, type: body.type, date: body.date, description: body.description, amount: body.amount, photo: body.photo
+                }
+            }
+            const result = await campDB.updateOne(query, updatedCamp, { upsert: true });
             res.send(result);
         })
 
