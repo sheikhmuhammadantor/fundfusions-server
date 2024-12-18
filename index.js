@@ -1,13 +1,37 @@
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 3000;
 
 // ? Middleware:
-app.use(cors());
+app.use(cors({
+    origin: [
+        'http://localhost:5173'
+    ],
+    credentials: true
+}));
 app.use(express.json());
+app.use(cookieParser());
+
+const verifyToken = (req, res, next) => {
+    const token = req.cookies?.token;
+
+    if(!token){
+        return res.status(401).send({message: 'Unauthorize Access'});
+    }
+
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if(err) {
+            return res.status(401).send({message: 'Unauthorize Access'})
+        }
+        req.user = decoded;
+        next();
+    })
+}
 
 
 // ! Work With - MongoDB ;
@@ -24,11 +48,32 @@ const client = new MongoClient(uri, {
 
 async function run() {
     try {
-        // Connect the client to the server	(optional starting in v4.7)
+        // ? Connect the client to the server	(optional starting in v4.7)
         // await client.connect();
 
         const campDB = client.db("FoundFusions").collection('campaign');
         const donationDB = client.db("FoundFusions").collection('donated collection');
+
+        // * JWT AUTH API;
+        app.post('/jwt', (req, res) => {
+            const user = req.body;
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+                expiresIn: '5h'
+            });
+
+            res.cookie('token', token, {
+                httpOnly: true,
+                secure: false,
+            }).send({success: true})
+        })
+
+        app.post('/logout', (req, res) => {
+            res.clearCookie('token', {
+                httpOnly: true,
+                secure: false,
+            }).send({success: true})
+        })
+
 
         // * Work With Api/Frontend Route's;
         app.post('/addCampaign', async (req, res) => {
@@ -42,7 +87,7 @@ async function run() {
             const result = await campDB.find().toArray();
             res.send(result);
         })
-        
+
         app.get('/campaigns/sort', async (req, res) => {
             const result = await campDB.find().sort({ amount: 1 }).toArray();
             res.send(result);
@@ -67,15 +112,20 @@ async function run() {
             res.send(result);
         })
 
-        app.get('/myCampaign', async (req, res) => {
+        app.get('/myCampaign', verifyToken, async (req, res) => {
             const email = req.query.email;
+
+            if(req.user.email !== req.query.email){
+                return res.status(403).send({message: 'Forbidden Assess'})
+            }
+
             const query = { email: email }
             const result = await campDB.find(query).toArray();
             res.send(result);
         })
 
         app.delete('/myCampaign/:id', async (req, res) => {
-            const id = req.params.id; 
+            const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await campDB.deleteOne(query);
             res.send(result);
@@ -94,11 +144,11 @@ async function run() {
         })
 
 
-        // Send a ping to confirm a successful connection
+        // ? Send a ping to confirm a successful connection
         // await client.db("admin").command({ ping: 1 });
         // console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
-        // Ensures that the client will close when you finish/error
+        // ? Ensures that the client will close when you finish/error
         // await client.close();
     }
 }
