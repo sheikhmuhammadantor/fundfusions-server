@@ -10,23 +10,30 @@ const port = process.env.PORT || 3000;
 // ? Middleware:
 app.use(cors({
     origin: [
-        'http://localhost:5173'
+        'http://localhost:5173',
+        'https://fundfusions.netlify.app'
     ],
     credentials: true
 }));
 app.use(express.json());
 app.use(cookieParser());
 
+const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+};
+
 const verifyToken = (req, res, next) => {
     const token = req.cookies?.token;
 
-    if(!token){
-        return res.status(401).send({message: 'Unauthorize Access'});
+    if (!token) {
+        return res.status(401).send({ message: 'Unauthorize Access' });
     }
 
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-        if(err) {
-            return res.status(401).send({message: 'Unauthorize Access'})
+        if (err) {
+            return res.status(401).send({ message: 'Unauthorize Access' })
         }
         req.user = decoded;
         next();
@@ -58,20 +65,14 @@ async function run() {
         app.post('/jwt', (req, res) => {
             const user = req.body;
             const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-                expiresIn: '5h'
+                expiresIn: '8h'
             });
 
-            res.cookie('token', token, {
-                httpOnly: true,
-                secure: false,
-            }).send({success: true})
+            res.cookie('token', token, cookieOptions).send({ success: true })
         })
 
         app.post('/logout', (req, res) => {
-            res.clearCookie('token', {
-                httpOnly: true,
-                secure: false,
-            }).send({success: true})
+            res.clearCookie('token', cookieOptions).send({ success: true })
         })
 
 
@@ -115,8 +116,8 @@ async function run() {
         app.get('/myCampaign', verifyToken, async (req, res) => {
             const email = req.query.email;
 
-            if(req.user.email !== req.query.email){
-                return res.status(403).send({message: 'Forbidden Assess'})
+            if (req.user.email !== req.query.email) {
+                return res.status(403).send({ message: 'Forbidden Assess' })
             }
 
             const query = { email: email }
@@ -156,7 +157,7 @@ run().catch(console.dir);
 
 
 app.get('/', (req, res) => {
-    res.send('Hello World!!')
+    res.send('Job is Falling from the SKY !!!')
 })
 
 app.listen(port, () => {
